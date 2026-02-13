@@ -174,7 +174,7 @@
                 distTxt.innerText = d > 1000 ? (d/1000).toFixed(1) + "KM" : Math.round(d) + "M";
 
                 // Logica messaggi migliorata
-                if (d <= 10 || forcedUnlock) {
+                if (d <= 5 || forcedUnlock) {
                     gift.classList.remove('locked');
                     gift.classList.add('near');
                     msgTxt.innerText = "Tocca il mio cuore.";
@@ -205,3 +205,4 @@
     </script>
 </body>
 </html>
+

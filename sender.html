@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Console Trasmettitore</title>
+    <style>
+        body { 
+            margin: 0; font-family: 'Segoe UI', sans-serif; 
+            background: #111827; color: white; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            height: 100vh; text-align: center;
+        }
+        .panel {
+            background: #1f2937; padding: 25px; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 85%; max-width: 400px;
+        }
+        #status-light {
+            width: 12px; height: 12px; background: #ef4444; 
+            border-radius: 50%; display: inline-block; margin-right: 8px;
+        }
+        .online { background: #10b981 !important; box-shadow: 0 0 10px #10b981; }
+        .data { font-family: monospace; color: #38bdf8; margin: 15px 0; font-size: 1rem; background: #000; padding: 10px; border-radius: 8px; }
+        
+        button {
+            border: none; color: white; padding: 15px; border-radius: 12px; 
+            font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem;
+            margin-bottom: 10px; transition: transform 0.1s;
+        }
+        button:active { transform: scale(0.98); }
+        .btn-toggle { background: #10b981; }
+        .btn-emergency { background: #ef4444; margin-top: 10px; }
+        h2 { margin: 0 0 20px 0; font-size: 1rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+
+    <div class="panel">
+        <h2>S.V. Command Center</h2>
+        
+        <div style="margin-bottom: 20px;">
+            <div id="status-light"></div>
+            <span id="status-text">GPS Inattivo</span>
+        </div>
+        
+        <div class="data" id="coords">Lat: -- | Lon: --</div>
+        <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 20px;" id="timestamp">In attesa di avvio...</div>
+
+        <button id="btn-toggle" class="btn-toggle" onclick="toggleInvio()">📡 AVVIA TRASMISSIONE</button>
+        <button class="btn-emergency" onclick="forzaSblocco()">🔓 SBLOCCO D'EMERGENZA</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXT2XTiaCTZlb_H1s0NSdv46AsEt18EAg",
+            authDomain: "stvalentino-41bf8.firebaseapp.com",
+            projectId: "stvalentino-41bf8",
+            databaseURL: "https://stvalentino-41bf8-default-rtdb.europe-west1.firebasedatabase.app/",
+            storageBucket: "stvalentino-41bf8.firebasestorage.app",
+            messagingSenderId: "367474919495",
+            appId: "1:367474919495:web:43aa0a0ff790b588074962"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let watchId = null;
+        let isTransmitting = false;
+
+        function toggleInvio() {
+            const btn = document.getElementById('btn-toggle');
+            if (!isTransmitting) {
+                // Avvia
+                isTransmitting = true;
+                btn.innerText = "🛑 FERMA TRASMISSIONE";
+                btn.style.background = "#4b5563";
+                avviaTracking();
+            } else {
+                // Ferma
+                isTransmitting = false;
+                btn.innerText = "📡 AVVIA TRASMISSIONE";
+                btn.style.background = "#10b981";
+                fermaTracking();
+            }
+        }
+
+        function avviaTracking() {
+            if ("geolocation" in navigator) {
+                watchId = navigator.geolocation.watchPosition((pos) => {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    
+                    db.ref('posizione_lei').update({
+                        lat: lat,
+                        lon: lon,
+                        timestamp: Date.now(),
+                        startSearching: true
+                    });
+
+                    document.getElementById('status-light').className = 'online';
+                    document.getElementById('status-text').innerText = 'Trasmissione in corso';
+                    document.getElementById('coords').innerText = `Lat: ${lat.toFixed(6)}\nLon: ${lon.toFixed(6)}`;
+                    document.getElementById('timestamp').innerText = 'Ultimo update: ' + new Date().toLocaleTimeString();
+                }, (err) => {
+                    alert("Errore GPS: " + err.message);
+                }, { enableHighAccuracy: true });
+            }
+        }
+
+        function fermaTracking() {
+            if (watchId) navigator.geolocation.clearWatch(watchId);
+
+            // Inviata una chiamata finale per resettare lo stato nel DB
+            db.ref('posizione_lei').update({
+                startSearching: false, // Indica al ricevente che la ricerca è sospesa
+            }).then(() => {
+                console.log("Stato resettato sul database.");
+            });
+
+            document.getElementById('status-light').className = '';
+            document.getElementById('status-text').innerText = 'Trasmissione Sospesa';
+        }
+
+        function forzaSblocco() {
+            if(confirm("Vuoi forzare l'apertura del pacco da remoto?")) {
+                db.ref('posizione_lei').update({ forzaSblocco: true })
+                  .then(() => alert("Comando inviato correttamente!"));
+            }
+        }
+    </script>
+</body>
+</html>

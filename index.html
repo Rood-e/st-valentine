@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.V. Protocol - Decrypting...</title>
+    <style>
+        :root { --primary: #ef4444; --bg: #0f172a; --info: #38bdf8; }
+        body { 
+            margin: 0; height: 100vh; background: var(--bg); color: white;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        .radar-container { position: relative; margin-bottom: 50px; }
+        .radar-pulse {
+            position: absolute; width: 200px; height: 200px;
+            border: 2px solid var(--primary); border-radius: 50%;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            animation: pulse 2s infinite; opacity: 0;
+        }
+
+        #gift-box {
+            width: 120px; height: 120px; background: var(--primary);
+            position: relative; cursor: pointer; z-index: 10;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+        }
+        #gift-box::before { content: ''; position: absolute; width: 20px; height: 100%; background: #fff; }
+        #gift-box::after { content: ''; position: absolute; height: 20px; width: 100%; background: #fff; }
+        
+        .locked { filter: grayscale(1) contrast(0.5); pointer-events: none; }
+        .near { animation: shake 0.3s infinite; filter: none; pointer-events: auto; transform: scale(1.1); }
+        .opened { transform: scale(0) rotate(720deg); opacity: 0; }
+
+        #info-panel { text-align: center; z-index: 10; padding: 20px; }
+        #distance { font-size: 3rem; font-weight: bold; color: var(--info); margin: 0; }
+        #status-msg { font-size: 0.8rem; letter-spacing: 2px; color: #94a3b8; margin-top: 10px; text-transform: uppercase; }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; }
+            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(5deg); }
+            75% { transform: rotate(-5deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="radar-container">
+        <div class="radar-pulse"></div>
+        <div id="gift-box" class="locked"></div>
+    </div>
+
+    <div id="info-panel">
+        <p id="distance">--- m</p>
+        <p id="status-msg">Inizializzazione sensori...</p>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXT2XTiaCTZlb_H1s0NSdv46AsEt18EAg",
+            authDomain: "stvalentino-41bf8.firebaseapp.com",
+            projectId: "stvalentino-41bf8",
+            databaseURL: "https://stvalentino-41bf8-default-rtdb.europe-west1.firebasedatabase.app/",
+            storageBucket: "stvalentino-41bf8.firebasestorage.app",
+            messagingSenderId: "367474919495",
+            appId: "1:367474919495:web:43aa0a0ff790b588074962"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const gift = document.getElementById('gift-box');
+        const distTxt = document.getElementById('distance');
+        const msgTxt = document.getElementById('status-msg');
+
+        // Coordinate di default (se il sender non ha ancora inviato nulla)
+        let targetLat = 44.8561896;
+        let targetLon = 10.6327032;
+        let forcedUnlock = false;
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        // 1. Ascolta Firebase per aggiornamenti dal mittente
+        db.ref('posizione_lei').on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+            
+            forcedUnlock = data.forzaSblocco || false;
+            if (data.startSearching) {
+                targetLat = data.lat;
+                targetLon = data.lon;
+            }
+        });
+
+        // 2. Monitora la posizione del ricevente in tempo reale
+        if ("geolocation" in navigator) {
+            navigator.geolocation.watchPosition((pos) => {
+                const miaLat = pos.coords.latitude;
+                const miaLon = pos.coords.longitude;
+                
+                const d = haversine(miaLat, miaLon, targetLat, targetLon);
+                
+                // Aggiorna UI Distanza
+                distTxt.innerText = d > 1000 ? (d/1000).toFixed(2) + " km" : Math.round(d) + " m";
+
+                // Logica Sblocco (5 metri di tolleranza)
+                if (d <= 2 || forcedUnlock) {
+                    gift.className = "near";
+                    msgTxt.innerText = "TARGET RAGGIUNTO. TOCCA PER APRIRE.";
+                    if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+                } else {
+                    gift.className = "locked";
+                    msgTxt.innerText = "IN AVVICINAMENTO AL TARGET...";
+                }
+            }, (err) => {
+                msgTxt.innerText = "ATTIVA IL GPS PER CONTINUARE";
+            }, { 
+                enableHighAccuracy: true, 
+                maximumAge: 0, 
+                timeout: 5000 
+            });
+        }
+
+        gift.addEventListener('click', () => {
+            if (gift.classList.contains('near')) {
+                gift.className = "opened";
+                setTimeout(() => {
+                    alert("❤️ SORPRESA! ❤️\nBuon San Valentino. Sei arrivata a destinazione!");
+                    // Facoltativo: window.location.href = "tua_sorpresa.html";
+                }, 600);
+            }
+        });
+    </script>
+</body>
+</html>

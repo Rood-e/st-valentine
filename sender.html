@@ -3,51 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Console Trasmettitore</title>
+    <title>Brat Command Center</title>
     <style>
+        :root {
+            --brat-green: #82ff00;
+            --brat-pink: #ff00f7;
+            --bg: #000;
+        }
+
         body { 
-            margin: 0; font-family: 'Segoe UI', sans-serif; 
-            background: #111827; color: white; 
+            margin: 0; font-family: 'Arial Black', sans-serif; 
+            background: var(--bg); color: var(--brat-green); 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            height: 100vh; text-align: center;
+            height: 100vh; text-align: center; overflow: hidden;
+            text-transform: uppercase;
         }
+
+        /* Effetto Scanline */
+        body::before {
+            content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
+            background-size: 100% 4px; pointer-events: none; z-index: 10;
+        }
+
         .panel {
-            background: #1f2937; padding: 25px; border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 85%; max-width: 400px;
+            border: 4px solid var(--brat-green);
+            padding: 30px; background: #000;
+            box-shadow: 12px 12px 0px var(--brat-pink);
+            width: 85%; max-width: 380px;
+            position: relative; z-index: 5;
         }
+
+        h2 { 
+            margin: 0 0 25px 0; font-size: 1.2rem; 
+            background: var(--brat-green); color: #000;
+            padding: 5px; letter-spacing: 2px;
+        }
+
+        #status-container {
+            margin-bottom: 25px; padding: 10px;
+            border: 2px solid #222;
+        }
+
         #status-light {
-            width: 12px; height: 12px; background: #ef4444; 
-            border-radius: 50%; display: inline-block; margin-right: 8px;
+            width: 14px; height: 14px; background: #333; 
+            border-radius: 50%; display: inline-block; margin-right: 10px;
+            transition: 0.3s;
         }
-        .online { background: #10b981 !important; box-shadow: 0 0 10px #10b981; }
-        .data { font-family: monospace; color: #38bdf8; margin: 15px 0; font-size: 1rem; background: #000; padding: 10px; border-radius: 8px; }
+
+        .online { 
+            background: var(--brat-green) !important; 
+            box-shadow: 0 0 15px var(--brat-green); 
+        }
+
+        .data { 
+            font-family: monospace; color: #fff; 
+            margin: 20px 0; font-size: 1.1rem; 
+            background: #111; padding: 15px; 
+            border: 1px solid var(--brat-green);
+        }
         
         button {
-            border: none; color: white; padding: 15px; border-radius: 12px; 
-            font-weight: bold; cursor: pointer; width: 100%; font-size: 1rem;
-            margin-bottom: 10px; transition: transform 0.1s;
+            border: none; padding: 18px; 
+            font-family: 'Arial Black', sans-serif;
+            font-weight: bold; cursor: pointer; width: 100%; font-size: 0.9rem;
+            margin-bottom: 15px; transition: all 0.1s;
+            text-transform: uppercase;
         }
-        button:active { transform: scale(0.98); }
-        .btn-toggle { background: #10b981; }
-        .btn-emergency { background: #ef4444; margin-top: 10px; }
-        h2 { margin: 0 0 20px 0; font-size: 1rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; }
+
+        button:active { transform: translate(4px, 4px); box-shadow: none; }
+
+        .btn-toggle { 
+            background: var(--brat-green); color: #000;
+            box-shadow: 6px 6px 0px var(--brat-pink);
+        }
+
+        .btn-emergency { 
+            background: #000; color: var(--brat-pink); 
+            border: 2px solid var(--brat-pink);
+            margin-top: 10px;
+        }
+
+        #timestamp { font-size: 0.65rem; color: #666; margin-top: 10px; }
+
     </style>
 </head>
 <body>
 
     <div class="panel">
-        <h2>S.V. Command Center</h2>
+        <h2>S.V. Uplink Console</h2>
         
-        <div style="margin-bottom: 20px;">
+        <div id="status-container">
             <div id="status-light"></div>
-            <span id="status-text">GPS Inattivo</span>
+            <span id="status-text">GPS: Offline</span>
         </div>
         
-        <div class="data" id="coords">Lat: -- | Lon: --</div>
-        <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 20px;" id="timestamp">In attesa di avvio...</div>
+        <div class="data" id="coords">Lat: 0.000000<br>Lon: 0.000000</div>
 
-        <button id="btn-toggle" class="btn-toggle" onclick="toggleInvio()">📡 AVVIA TRASMISSIONE</button>
-        <button class="btn-emergency" onclick="forzaSblocco()">🔓 SBLOCCO D'EMERGENZA</button>
+        <button id="btn-toggle" class="btn-toggle" onclick="toggleInvio()">📡 Inizia Trasmissione</button>
+        <button class="btn-emergency" onclick="forzaSblocco()">🔓 Override Remoto</button>
+        
+        <div id="timestamp">Sistema in standby...</div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
@@ -73,16 +129,14 @@
         function toggleInvio() {
             const btn = document.getElementById('btn-toggle');
             if (!isTransmitting) {
-                // Avvia
                 isTransmitting = true;
-                btn.innerText = "🛑 FERMA TRASMISSIONE";
-                btn.style.background = "#4b5563";
+                btn.innerText = "🛑 Interrompi Segnale";
+                btn.style.background = var(--brat-pink); // Cambio colore per indicare stop
                 avviaTracking();
             } else {
-                // Ferma
                 isTransmitting = false;
-                btn.innerText = "📡 AVVIA TRASMISSIONE";
-                btn.style.background = "#10b981";
+                btn.innerText = "📡 Inizia Trasmissione";
+                btn.style.background = ""; // Torna a brat-green via CSS class
                 fermaTracking();
             }
         }
@@ -101,9 +155,9 @@
                     });
 
                     document.getElementById('status-light').className = 'online';
-                    document.getElementById('status-text').innerText = 'Trasmissione in corso';
-                    document.getElementById('coords').innerText = `Lat: ${lat.toFixed(6)}\nLon: ${lon.toFixed(6)}`;
-                    document.getElementById('timestamp').innerText = 'Ultimo update: ' + new Date().toLocaleTimeString();
+                    document.getElementById('status-text').innerText = 'GPS: Trasmettendo';
+                    document.getElementById('coords').innerHTML = `Lat: ${lat.toFixed(6)}<br>Lon: ${lon.toFixed(6)}`;
+                    document.getElementById('timestamp').innerText = 'Ultimo Sync: ' + new Date().toLocaleTimeString();
                 }, (err) => {
                     alert("Errore GPS: " + err.message);
                 }, { enableHighAccuracy: true });
@@ -112,22 +166,16 @@
 
         function fermaTracking() {
             if (watchId) navigator.geolocation.clearWatch(watchId);
-
-            // Inviata una chiamata finale per resettare lo stato nel DB
-            db.ref('posizione_lei').update({
-                startSearching: false, // Indica al ricevente che la ricerca è sospesa
-            }).then(() => {
-                console.log("Stato resettato sul database.");
-            });
-
+            db.ref('posizione_lei').update({ startSearching: false });
             document.getElementById('status-light').className = '';
-            document.getElementById('status-text').innerText = 'Trasmissione Sospesa';
+            document.getElementById('status-text').innerText = 'GPS: Offline';
+            document.getElementById('timestamp').innerText = 'Trasmissione terminata.';
         }
 
         function forzaSblocco() {
-            if(confirm("Vuoi forzare l'apertura del pacco da remoto?")) {
+            if(confirm("Vuoi forzare lo sblocco del cuore sul suo telefono?")) {
                 db.ref('posizione_lei').update({ forzaSblocco: true })
-                  .then(() => alert("Comando inviato correttamente!"));
+                  .then(() => alert("Comando di sblocco inviato!"));
             }
         }
     </script>

@@ -19,6 +19,7 @@
             text-transform: uppercase;
         }
 
+        /* Effetto Scanline VHS */
         body::before {
             content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
@@ -34,7 +35,7 @@
         }
 
         h2 { 
-            margin: 0 0 25px 0; font-size: 1.2rem; 
+            margin: 0 0 25px 0; font-size: 1.1rem; 
             background: var(--brat-green); color: #000;
             padding: 5px; letter-spacing: 2px;
         }
@@ -45,7 +46,7 @@
         }
 
         #status-light {
-            width: 14px; height: 14px; background: #333; 
+            width: 14px; height: 14px; background: #ef4444; 
             border-radius: 50%; display: inline-block; margin-right: 10px;
             transition: 0.3s;
         }
@@ -57,16 +58,17 @@
 
         .data { 
             font-family: monospace; color: #fff; 
-            margin: 20px 0; font-size: 1.1rem; 
+            margin: 20px 0; font-size: 1rem; 
             background: #111; padding: 15px; 
             border: 1px solid var(--brat-green);
-            line-height: 1.4;
+            line-height: 1.5;
+            text-transform: none;
         }
         
         button {
             border: none; padding: 18px; 
             font-family: 'Arial Black', sans-serif;
-            font-weight: bold; cursor: pointer; width: 100%; font-size: 0.9rem;
+            font-weight: bold; cursor: pointer; width: 100%; font-size: 0.85rem;
             margin-bottom: 15px; transition: all 0.1s;
             text-transform: uppercase;
         }
@@ -91,19 +93,19 @@
 <body>
 
     <div class="panel">
-        <h2>S.V. Uplink Console</h2>
+        <h2>S.V. Command Center</h2>
         
         <div id="status-container">
             <div id="status-light"></div>
-            <span id="status-text">GPS: Offline</span>
+            <span id="status-text">GPS Inattivo</span>
         </div>
         
-        <div class="data" id="coords">Lat: 0.000000<br>Lon: 0.000000</div>
+        <div class="data" id="coords">Lat: --<br>Lon: --</div>
 
-        <button id="btn-toggle" class="btn-toggle" onclick="toggleInvio()">📡 Inizia Trasmissione</button>
-        <button class="btn-emergency" onclick="forzaSblocco()">🔓 Override Remoto</button>
+        <button id="btn-toggle" class="btn-toggle" onclick="toggleInvio()">📡 AVVIA TRASMISSIONE</button>
+        <button class="btn-emergency" onclick="forzaSblocco()">🔓 SBLOCCO D'EMERGENZA</button>
         
-        <div id="timestamp">Sistema in standby...</div>
+        <div id="timestamp">In attesa di avvio...</div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
@@ -130,13 +132,15 @@
             const btn = document.getElementById('btn-toggle');
             if (!isTransmitting) {
                 isTransmitting = true;
-                btn.innerText = "🛑 Interrompi Segnale";
-                btn.style.background = "#ff00f7"; // Brat Pink
+                btn.innerText = "🛑 FERMA TRASMISSIONE";
+                btn.style.background = "#4b5563"; // Grigio scuro come da tuo originale
+                btn.style.color = "white";
                 avviaTracking();
             } else {
                 isTransmitting = false;
-                btn.innerText = "📡 Inizia Trasmissione";
-                btn.style.background = "#82ff00"; // Brat Green
+                btn.innerText = "📡 AVVIA TRASMISSIONE";
+                btn.style.background = "#82ff00"; // Verde Brat
+                btn.style.color = "#000";
                 fermaTracking();
             }
         }
@@ -155,14 +159,12 @@
                     });
 
                     document.getElementById('status-light').className = 'online';
-                    document.getElementById('status-text').innerText = 'GPS: Trasmettendo';
+                    document.getElementById('status-text').innerText = 'Trasmissione in corso';
                     document.getElementById('coords').innerHTML = `Lat: ${lat.toFixed(6)}<br>Lon: ${lon.toFixed(6)}`;
-                    document.getElementById('timestamp').innerText = 'Ultimo Sync: ' + new Date().toLocaleTimeString();
+                    document.getElementById('timestamp').innerText = 'Ultimo update: ' + new Date().toLocaleTimeString();
                 }, (err) => {
                     alert("Errore GPS: " + err.message);
                 }, { enableHighAccuracy: true });
-            } else {
-                alert("GPS non supportato dal browser");
             }
         }
 
@@ -170,14 +172,13 @@
             if (watchId) navigator.geolocation.clearWatch(watchId);
             db.ref('posizione_lei').update({ startSearching: false });
             document.getElementById('status-light').className = '';
-            document.getElementById('status-text').innerText = 'GPS: Offline';
-            document.getElementById('timestamp').innerText = 'Trasmissione terminata.';
+            document.getElementById('status-text').innerText = 'Trasmissione Sospesa';
         }
 
         function forzaSblocco() {
-            if(confirm("Vuoi forzare lo sblocco del cuore sul suo telefono?")) {
+            if(confirm("Vuoi forzare l'apertura del pacco da remoto?")) {
                 db.ref('posizione_lei').update({ forzaSblocco: true })
-                  .then(() => alert("Comando di sblocco inviato!"));
+                  .then(() => alert("Comando inviato correttamente!"));
             }
         }
     </script>

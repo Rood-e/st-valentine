@@ -19,7 +19,6 @@
             text-transform: uppercase;
         }
 
-        /* Effetto Scanline */
         body::before {
             content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
@@ -61,6 +60,7 @@
             margin: 20px 0; font-size: 1.1rem; 
             background: #111; padding: 15px; 
             border: 1px solid var(--brat-green);
+            line-height: 1.4;
         }
         
         button {
@@ -131,12 +131,12 @@
             if (!isTransmitting) {
                 isTransmitting = true;
                 btn.innerText = "🛑 Interrompi Segnale";
-                btn.style.background = var(--brat-pink); // Cambio colore per indicare stop
+                btn.style.background = "#ff00f7"; // Brat Pink
                 avviaTracking();
             } else {
                 isTransmitting = false;
                 btn.innerText = "📡 Inizia Trasmissione";
-                btn.style.background = ""; // Torna a brat-green via CSS class
+                btn.style.background = "#82ff00"; // Brat Green
                 fermaTracking();
             }
         }
@@ -161,6 +161,8 @@
                 }, (err) => {
                     alert("Errore GPS: " + err.message);
                 }, { enableHighAccuracy: true });
+            } else {
+                alert("GPS non supportato dal browser");
             }
         }
 

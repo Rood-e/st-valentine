@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BRAT LOVE PROTOCOL</title>
+    <title>St. Valentine - pp</title>
     <style>
         :root {
             --brat-green: #82ff00;
@@ -172,12 +172,12 @@
                 const d = haversine(pos.coords.latitude, pos.coords.longitude, targetLat, targetLon);
                 distTxt.innerText = d > 1000 ? (d/1000).toFixed(1) + "KM" : Math.round(d) + "M";
 
-                if (d > 3) msgTxt.innerText = "Ti aspetto, muoviti";
+                if (d > 5000) msgTxt.innerText = "Ti aspetto, muoviti";
                 else if (d <= 5000 && d > 1000) msgTxt.innerText = "Ti sento più vicino...";
                 else if (d <= 1000 && d > 200) msgTxt.innerText = "Quasi preso!";
                 else if (d <= 200 && d > 50) msgTxt.innerText = "Ci sei quasi";
 
-                if (d <= 5 || forcedUnlock) {
+                if (d <= 3 || forcedUnlock) {
                     gift.classList.remove('locked');
                     gift.classList.add('near');
                     msgTxt.innerText = "Tocca il mio cuore.";
@@ -200,3 +200,4 @@
     </script>
 </body>
 </html>
+

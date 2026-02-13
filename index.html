@@ -3,63 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>S.V. Protocol - Decrypting...</title>
+    <title>BRAT LOVE PROTOCOL</title>
     <style>
-        :root { --primary: #ef4444; --bg: #0f172a; --info: #38bdf8; }
-        body { 
-            margin: 0; height: 100vh; background: var(--bg); color: white;
-            font-family: 'Courier New', Courier, monospace;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            overflow: hidden;
+        :root {
+            --brat-green: #82ff00;
+            --brat-pink: #ff00f7;
+            --bg: #0a0a0a;
         }
 
-        .radar-container { position: relative; margin-bottom: 50px; }
-        .radar-pulse {
-            position: absolute; width: 200px; height: 200px;
-            border: 2px solid var(--primary); border-radius: 50%;
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            animation: pulse 2s infinite; opacity: 0;
+        body, html { 
+            margin: 0; height: 100%; background: var(--bg); 
+            color: var(--brat-green); font-family: 'Arial Black', sans-serif;
+            overflow: hidden; text-transform: uppercase;
         }
 
-        #gift-box {
-            width: 120px; height: 120px; background: var(--primary);
-            position: relative; cursor: pointer; z-index: 10;
-            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+        .crt-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none; z-index: 100;
+            animation: flicker 0.15s infinite;
         }
-        #gift-box::before { content: ''; position: absolute; width: 20px; height: 100%; background: #fff; }
-        #gift-box::after { content: ''; position: absolute; height: 20px; width: 100%; background: #fff; }
-        
-        .locked { filter: grayscale(1) contrast(0.5); pointer-events: none; }
-        .near { animation: shake 0.3s infinite; filter: none; pointer-events: auto; transform: scale(1.1); }
-        .opened { transform: scale(0) rotate(720deg); opacity: 0; }
 
-        #info-panel { text-align: center; z-index: 10; padding: 20px; }
-        #distance { font-size: 3rem; font-weight: bold; color: var(--info); margin: 0; }
-        #status-msg { font-size: 0.8rem; letter-spacing: 2px; color: #94a3b8; margin-top: 10px; text-transform: uppercase; }
+        .main-content {
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; height: 100vh; text-align: center;
+            transition: opacity 0.5s;
+        }
 
-        @keyframes pulse {
-            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0.8; }
-            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+        .heart-container {
+            position: relative; width: 100px; height: 90px;
+            margin: 40px 0; cursor: pointer;
         }
-        @keyframes shake {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(5deg); }
-            75% { transform: rotate(-5deg); }
+
+        .heart {
+            position: absolute; width: 50px; height: 80px;
+            background: var(--brat-green);
+            border-radius: 50px 50px 0 0;
+            transform: rotate(-45deg); transform-origin: 0 100%;
+            left: 50px; top: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+
+        .heart::after {
+            content: ""; position: absolute; width: 50px; height: 80px;
+            background: inherit; border-radius: 50px 50px 0 0;
+            transform: rotate(90deg); transform-origin: 0 100%;
+            left: 0; top: 0;
+        }
+
+        .locked { filter: grayscale(1) opacity(0.2); }
+        .near { animation: pulse 0.4s infinite alternate; filter: drop-shadow(0 0 15px var(--brat-pink)); }
+        .near .heart { background: var(--brat-pink) !important; }
+
+        #reveal-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; color: var(--brat-green);
+            display: none; flex-direction: column; align-items: center;
+            justify-content: center; z-index: 200; padding: 20px;
+            box-sizing: border-box; border: 10px solid var(--brat-green);
+        }
+
+        .reveal-text { 
+            font-size: 2rem; line-height: 1; margin-bottom: 10px; 
+            text-shadow: 3px 3px 0px var(--brat-pink);
+        }
+
+        .sub-text { font-size: 1rem; text-transform: none; color: #fff; margin-bottom: 30px; }
+
+        /* Il Buono */
+        .coupon {
+            border: 2px dashed var(--brat-green);
+            padding: 15px;
+            background: rgba(130, 255, 0, 0.05);
+            position: relative;
+            animation: glitch-border 2s infinite;
+        }
+
+        .coupon-title { font-size: 0.7rem; color: var(--brat-pink); margin-bottom: 5px; }
+        .coupon-value { font-size: 1.4rem; color: var(--brat-green); }
+
+        button {
+            background: var(--brat-green); color: #000; border: none;
+            padding: 12px 25px; font-family: 'Arial Black'; font-size: 0.8rem;
+            box-shadow: 4px 4px 0px var(--brat-pink); cursor: pointer;
+            margin-top: 30px;
+        }
+
+        #distance { font-size: 5rem; text-shadow: 4px 4px 0px var(--brat-pink); margin: 10px 0; }
+        #status-msg { font-size: 0.8rem; letter-spacing: 1px; color: #fff; background: #222; padding: 5px 15px; min-height: 20px; }
+
+        @keyframes pulse { from { transform: scale(1.1); } to { transform: scale(1.3); } }
+        @keyframes flicker { 0% { opacity: 0.98; } 100% { opacity: 1; } }
+        @keyframes glitch-border { 0%, 100% { border-color: var(--brat-green); } 50% { border-color: var(--brat-pink); } }
+
     </style>
 </head>
 <body>
 
-    <div class="radar-container">
-        <div class="radar-pulse"></div>
-        <div id="gift-box" class="locked"></div>
+    <div class="crt-overlay"></div>
+
+    <div class="main-content" id="ui-main">
+        <div id="status-msg">In attesa...</div>
+        <div id="distance">---</div>
+        <div class="heart-container locked" id="gift-box"><div class="heart"></div></div>
+        <div style="font-size: 0.7rem; opacity: 0.6;">Sintonizzazione segnale...</div>
     </div>
 
-    <div id="info-panel">
-        <p id="distance">--- m</p>
-        <p id="status-msg">Inizializzazione sensori...</p>
+    <div id="reveal-screen">
+        <div class="reveal-text">SEI QUI.<br>FINALMENTE.</div>
+        <div class="sub-text">Sapevo che mi avresti trovato.<br>Vieni a prenderti il resto.</div>
+        
+        <div class="coupon">
+            <div class="coupon-title">REWARD UNLOCKED:</div>
+            <div class="coupon-value">BUONO BISCOTTI PORCHI</div>
+            <div style="font-size: 0.5rem; margin-top: 5px; color: #888;">14/02/2026 | Valido per sempre</div>
+        </div>
+
+        <button onclick="location.reload()">RE-SCAN</button>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
@@ -82,8 +144,9 @@
         const gift = document.getElementById('gift-box');
         const distTxt = document.getElementById('distance');
         const msgTxt = document.getElementById('status-msg');
+        const revealScreen = document.getElementById('reveal-screen');
+        const uiMain = document.getElementById('ui-main');
 
-        // Coordinate di default (se il sender non ha ancora inviato nulla)
         let targetLat = 44.8561896;
         let targetLon = 10.6327032;
         let forcedUnlock = false;
@@ -96,54 +159,42 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         }
 
-        // 1. Ascolta Firebase per aggiornamenti dal mittente
         db.ref('posizione_lei').on('value', (snapshot) => {
             const data = snapshot.val();
-            if (!data) return;
-            
-            forcedUnlock = data.forzaSblocco || false;
-            if (data.startSearching) {
-                targetLat = data.lat;
-                targetLon = data.lon;
+            if (data) {
+                forcedUnlock = data.forzaSblocco || false;
+                if (data.startSearching) { targetLat = data.lat; targetLon = data.lon; }
             }
         });
 
-        // 2. Monitora la posizione del ricevente in tempo reale
         if ("geolocation" in navigator) {
             navigator.geolocation.watchPosition((pos) => {
-                const miaLat = pos.coords.latitude;
-                const miaLon = pos.coords.longitude;
-                
-                const d = haversine(miaLat, miaLon, targetLat, targetLon);
-                
-                // Aggiorna UI Distanza
-                distTxt.innerText = d > 1000 ? (d/1000).toFixed(2) + " km" : Math.round(d) + " m";
+                const d = haversine(pos.coords.latitude, pos.coords.longitude, targetLat, targetLon);
+                distTxt.innerText = d > 1000 ? (d/1000).toFixed(1) + "KM" : Math.round(d) + "M";
 
-                // Logica Sblocco (5 metri di tolleranza)
-                if (d <= 2 || forcedUnlock) {
-                    gift.className = "near";
-                    msgTxt.innerText = "TARGET RAGGIUNTO. TOCCA PER APRIRE.";
+                if (d > 3) msgTxt.innerText = "Ti aspetto, muoviti";
+                else if (d <= 5000 && d > 1000) msgTxt.innerText = "Ti sento più vicino...";
+                else if (d <= 1000 && d > 200) msgTxt.innerText = "Quasi preso!";
+                else if (d <= 200 && d > 50) msgTxt.innerText = "Ci sei quasi";
+
+                if (d <= 5 || forcedUnlock) {
+                    gift.classList.remove('locked');
+                    gift.classList.add('near');
+                    msgTxt.innerText = "Tocca il mio cuore.";
                     if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
                 } else {
-                    gift.className = "locked";
-                    msgTxt.innerText = "IN AVVICINAMENTO AL TARGET...";
+                    gift.classList.add('locked');
+                    gift.classList.remove('near');
                 }
-            }, (err) => {
-                msgTxt.innerText = "ATTIVA IL GPS PER CONTINUARE";
-            }, { 
-                enableHighAccuracy: true, 
-                maximumAge: 0, 
-                timeout: 5000 
-            });
+            }, null, { enableHighAccuracy: true });
         }
 
         gift.addEventListener('click', () => {
             if (gift.classList.contains('near')) {
-                gift.className = "opened";
+                uiMain.style.opacity = "0";
                 setTimeout(() => {
-                    alert("❤️ SORPRESA! ❤️\nBuon San Valentino. Sei arrivata a destinazione!");
-                    // Facoltativo: window.location.href = "tua_sorpresa.html";
-                }, 600);
+                    revealScreen.style.display = "flex";
+                }, 400);
             }
         });
     </script>

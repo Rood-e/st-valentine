@@ -68,7 +68,7 @@
             border: none; padding: 18px; 
             font-family: 'Arial Black', sans-serif;
             font-weight: bold; cursor: pointer; width: 100%; font-size: 0.85rem;
-            margin-bottom: 15px; transition: all 0.1s;
+            margin-bottom: 10px; transition: all 0.1s;
             text-transform: uppercase;
         }
 
@@ -82,10 +82,15 @@
         .btn-emergency { 
             background: #000; color: var(--brat-pink); 
             border: 2px solid var(--brat-pink);
-            margin-top: 10px;
         }
 
-        #timestamp { font-size: 0.65rem; color: #666; margin-top: 10px; }
+        .btn-reset {
+            background: #000; color: #fff;
+            border: 2px solid #fff;
+            margin-top: 5px;
+        }
+
+        #timestamp { font-size: 0.65rem; color: #666; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -102,6 +107,7 @@
 
         <button id="btn-toggle" class="btn-toggle" onclick="toggleInvio()">📡 AVVIA TRASMISSIONE</button>
         <button class="btn-emergency" onclick="forzaSblocco()">🔓 SBLOCCO D'EMERGENZA</button>
+        <button class="btn-reset" onclick="ripristinaBlocco()">🔒 RIPRISTINA BLOCCO</button>
         
         <div id="timestamp">In attesa di avvio...</div>
     </div>
@@ -135,7 +141,7 @@
                 btn.style.color = "white";
                 btn.style.boxShadow = "none";
                 
-                // Resetta lo sblocco d'emergenza all'avvio
+                // Resetta lo sblocco d'emergenza ogni volta che si inizia da capo
                 db.ref('posizione_lei').update({ forzaSblocco: false });
                 
                 avviaTracking();
@@ -145,6 +151,13 @@
                 btn.style.background = "#82ff00";
                 btn.style.color = "#000";
                 btn.style.boxShadow = "6px 6px 0px var(--brat-pink)";
+                
+                // RESET AUTOMATICO: Quando fermi la trasmissione, chiudi il regalo
+                db.ref('posizione_lei').update({ 
+                    startSearching: false,
+                    forzaSblocco: false 
+                });
+                
                 fermaTracking();
             }
         }
@@ -171,23 +184,25 @@
                     isTransmitting = false;
                     toggleInvio();
                 }, { enableHighAccuracy: true });
-            } else {
-                alert("Il tuo browser non supporta la geolocalizzazione.");
             }
         }
 
         function fermaTracking() {
             if (watchId) navigator.geolocation.clearWatch(watchId);
-            db.ref('posizione_lei').update({ startSearching: false });
             document.getElementById('status-light').className = '';
             document.getElementById('status-text').innerText = 'Trasmissione Sospesa';
         }
 
         function forzaSblocco() {
-            if(confirm("Vuoi forzare l'apertura del pacco da remoto?")) {
+            if(confirm("Vuoi forzare l'apertura del regalo da remoto?")) {
                 db.ref('posizione_lei').update({ forzaSblocco: true })
-                  .then(() => alert("Sblocco inviato! Il cuore diventerà rosa per lui."));
+                  .then(() => alert("Comando inviato! Regalo sbloccato."));
             }
+        }
+
+        function ripristinaBlocco() {
+            db.ref('posizione_lei').update({ forzaSblocco: false })
+              .then(() => alert("Regalo richiuso!"));
         }
     </script>
 </body>

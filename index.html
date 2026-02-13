@@ -53,8 +53,8 @@
             left: 0; top: 0;
         }
 
-        .locked { filter: grayscale(1) opacity(0.2); }
-        .near { animation: pulse 0.4s infinite alternate; filter: drop-shadow(0 0 15px var(--brat-pink)); }
+        .locked { filter: grayscale(1) opacity(0.2); pointer-events: none; }
+        .near { animation: pulse 0.4s infinite alternate; filter: drop-shadow(0 0 15px var(--brat-pink)); pointer-events: auto; }
         .near .heart { background: var(--brat-pink) !important; }
 
         #reveal-screen {
@@ -72,7 +72,6 @@
 
         .sub-text { font-size: 1rem; text-transform: none; color: #fff; margin-bottom: 30px; }
 
-        /* Il Buono */
         .coupon {
             border: 2px dashed var(--brat-green);
             padding: 15px;
@@ -97,7 +96,6 @@
         @keyframes pulse { from { transform: scale(1.1); } to { transform: scale(1.3); } }
         @keyframes flicker { 0% { opacity: 0.98; } 100% { opacity: 1; } }
         @keyframes glitch-border { 0%, 100% { border-color: var(--brat-green); } 50% { border-color: var(--brat-pink); } }
-
     </style>
 </head>
 <body>
@@ -105,10 +103,10 @@
     <div class="crt-overlay"></div>
 
     <div class="main-content" id="ui-main">
-        <div id="status-msg">In attesa...</div>
+        <div id="status-msg">In attesa del segnale...</div>
         <div id="distance">---</div>
         <div class="heart-container locked" id="gift-box"><div class="heart"></div></div>
-        <div style="font-size: 0.7rem; opacity: 0.6;">Sintonizzazione segnale...</div>
+        <div style="font-size: 0.7rem; opacity: 0.6;">Sintonizzazione amore...</div>
     </div>
 
     <div id="reveal-screen">
@@ -163,7 +161,10 @@
             const data = snapshot.val();
             if (data) {
                 forcedUnlock = data.forzaSblocco || false;
-                if (data.startSearching) { targetLat = data.lat; targetLon = data.lon; }
+                if (data.startSearching) { 
+                    targetLat = data.lat; 
+                    targetLon = data.lon; 
+                }
             }
         });
 
@@ -172,12 +173,8 @@
                 const d = haversine(pos.coords.latitude, pos.coords.longitude, targetLat, targetLon);
                 distTxt.innerText = d > 1000 ? (d/1000).toFixed(1) + "KM" : Math.round(d) + "M";
 
-                if (d > 5000) msgTxt.innerText = "Ti aspetto, muoviti";
-                else if (d <= 5000 && d > 1000) msgTxt.innerText = "Ti sento più vicino...";
-                else if (d <= 1000 && d > 200) msgTxt.innerText = "Quasi preso!";
-                else if (d <= 200 && d > 50) msgTxt.innerText = "Ci sei quasi";
-
-                if (d <= 3 || forcedUnlock) {
+                // Logica messaggi migliorata
+                if (d <= 10 || forcedUnlock) {
                     gift.classList.remove('locked');
                     gift.classList.add('near');
                     msgTxt.innerText = "Tocca il mio cuore.";
@@ -185,8 +182,15 @@
                 } else {
                     gift.classList.add('locked');
                     gift.classList.remove('near');
+                    
+                    if (d > 5000) msgTxt.innerText = "Ti aspetto, muoviti";
+                    else if (d > 1000) msgTxt.innerText = "Ti sento più vicino...";
+                    else if (d > 200) msgTxt.innerText = "Quasi preso!";
+                    else msgTxt.innerText = "Ci sei quasi!";
                 }
-            }, null, { enableHighAccuracy: true });
+            }, (err) => {
+                msgTxt.innerText = "Attiva il GPS!";
+            }, { enableHighAccuracy: true });
         }
 
         gift.addEventListener('click', () => {
@@ -194,10 +198,10 @@
                 uiMain.style.opacity = "0";
                 setTimeout(() => {
                     revealScreen.style.display = "flex";
+                    uiMain.style.display = "none";
                 }, 400);
             }
         });
     </script>
 </body>
 </html>
-

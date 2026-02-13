@@ -19,7 +19,6 @@
             text-transform: uppercase;
         }
 
-        /* Effetto Scanline VHS */
         body::before {
             content: " "; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%);
@@ -87,7 +86,6 @@
         }
 
         #timestamp { font-size: 0.65rem; color: #666; margin-top: 10px; }
-
     </style>
 </head>
 <body>
@@ -133,14 +131,20 @@
             if (!isTransmitting) {
                 isTransmitting = true;
                 btn.innerText = "🛑 FERMA TRASMISSIONE";
-                btn.style.background = "#4b5563"; // Grigio scuro come da tuo originale
+                btn.style.background = "#4b5563";
                 btn.style.color = "white";
+                btn.style.boxShadow = "none";
+                
+                // Resetta lo sblocco d'emergenza all'avvio
+                db.ref('posizione_lei').update({ forzaSblocco: false });
+                
                 avviaTracking();
             } else {
                 isTransmitting = false;
                 btn.innerText = "📡 AVVIA TRASMISSIONE";
-                btn.style.background = "#82ff00"; // Verde Brat
+                btn.style.background = "#82ff00";
                 btn.style.color = "#000";
+                btn.style.boxShadow = "6px 6px 0px var(--brat-pink)";
                 fermaTracking();
             }
         }
@@ -164,7 +168,11 @@
                     document.getElementById('timestamp').innerText = 'Ultimo update: ' + new Date().toLocaleTimeString();
                 }, (err) => {
                     alert("Errore GPS: " + err.message);
+                    isTransmitting = false;
+                    toggleInvio();
                 }, { enableHighAccuracy: true });
+            } else {
+                alert("Il tuo browser non supporta la geolocalizzazione.");
             }
         }
 
@@ -178,7 +186,7 @@
         function forzaSblocco() {
             if(confirm("Vuoi forzare l'apertura del pacco da remoto?")) {
                 db.ref('posizione_lei').update({ forzaSblocco: true })
-                  .then(() => alert("Comando inviato correttamente!"));
+                  .then(() => alert("Sblocco inviato! Il cuore diventerà rosa per lui."));
             }
         }
     </script>
